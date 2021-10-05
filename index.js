@@ -1,11 +1,16 @@
 import fastify from 'fastify'
 import fetch from 'node-fetch'
 import { parse } from 'himalaya'
+const fastify = require('fastify')()
 
 const server = fastify({
 	logger: {
 		prettyPrint: true
 	}
+})
+
+server.register(require('fastify-cors'), {
+	// put your options here
 })
 
 server.get('/edt/:user/:date', async (request, reply) => {
@@ -114,7 +119,7 @@ const formatJSON = (HTML, days) => {
 			salle: tempSalle,
 			info: tempInfo,
 			prof: tempProf,
-			day: closest.day,
+			day: new Date(closest.day),
 			color
 			// prof: tempProf,
 			// color: colors[configColor.colorIndex]
