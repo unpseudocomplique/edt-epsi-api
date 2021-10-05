@@ -9,11 +9,10 @@ const server = fastify({
 })
 
 server.register(import('fastify-cors'), {
-	origin: false // disable cors
+	origin: '*' // disable cors
 })
 
 server.get('/edt/:user/:date', async (request, reply) => {
-	console.log('request', request.params)
 	const response = await fetch(
 		`https://edtmobiliteng.wigorservices.net//WebPsDyn.aspx?action=posEDTBEECOME&serverid=C&Tel=${request.params.user}&date=${request.params.date}`
 	)
@@ -26,7 +25,7 @@ server.get('/edt/:user/:date', async (request, reply) => {
 		days
 	)
 
-	return formatedJSON
+	return lessonsToDays(formatedJSON)
 })
 
 server.listen(8080, (err, address) => {
@@ -43,20 +42,34 @@ const getDays = (HTMLJSON, days) => {
 			(attr) => attr.key === 'class' && attr.value === 'Jour'
 		)
 	})
-	return Htmldays.map((day) => {
+	return Htmldays.map((day, index) => {
 		const style = day.attributes[1].value
 		const left = style.split(';')[1]
 		const percent = left.split(':')[1]
 		const leftNumber = percent.slice(0, -1)
 		return {
 			day: day.children[1].children[0].children[0].children[0].content,
-			left: leftNumber
+			left: leftNumber,
+			index
 		}
 	})
 }
 
+const lessonsToDays = (json) => {
+	return json.reduce((days, value) => {
+		const currentDay = value.day
+		const day = days.find((day) => day.day === currentDay)
+		if (day) {
+			day.lessons.push(value)
+		} else {
+			days.push({ day: currentDay, index: value.index, lessons: [value] })
+		}
+		return days
+	}, [])
+}
+
 const formatJSON = (HTML, days) => {
-	const colors = ['#03A9F4', '#009688', '#3F51B5', '#fbc02d']
+	const colors = ['#03A9F4', '#009688', '#3F51B5', '#dbb044']
 	const Htmldays = HTML.filter((canBeDay) => {
 		return (
 			canBeDay.type === 'element' && canBeDay.attributes[0]?.value === 'Case'
@@ -113,12 +126,13 @@ const formatJSON = (HTML, days) => {
 			color = colors[configColor.colorIndex]
 		}
 		return {
-			tempHeure: tempHeure,
+			heure: tempHeure,
 			matiere: tempMatiere,
 			salle: tempSalle,
 			info: tempInfo,
 			prof: tempProf,
-			day: new Date(closest.day),
+			day: closest.day,
+			index: closest.index,
 			color
 			// prof: tempProf,
 			// color: colors[configColor.colorIndex]
