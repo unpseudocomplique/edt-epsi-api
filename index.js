@@ -10,7 +10,7 @@ const server = fastify({
 })
 
 server.register(require('fastify-cors'), {
-	// put your options here
+	origin: false // disable cors
 })
 
 server.get('/edt/:user/:date', async (request, reply) => {
