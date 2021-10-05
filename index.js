@@ -1,7 +1,6 @@
 import fastify from 'fastify'
 import fetch from 'node-fetch'
 import { parse } from 'himalaya'
-const fastify = require('fastify')()
 
 const server = fastify({
 	logger: {
@@ -9,7 +8,7 @@ const server = fastify({
 	}
 })
 
-server.register(require('fastify-cors'), {
+server.register(import('fastify-cors'), {
 	origin: false // disable cors
 })
 
