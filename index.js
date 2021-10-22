@@ -13,19 +13,34 @@ server.register(import('fastify-cors'), {
 })
 
 server.get('/edt/:user/:date', async (request, reply) => {
-	const response = await fetch(
-		`https://edtmobiliteng.wigorservices.net//WebPsDyn.aspx?action=posEDTBEECOME&serverid=C&Tel=${request.params.user}&date=${request.params.date}`
+	const date = request.params.date.split('-')
+	let dateString = ''
+	date.forEach((number, index) => {
+		dateString += `${number}${index !== date.length - 1 ? '%2F' : ''}`
+	})
+	console.log(
+		'request.params.user: ',
+		request.params.user,
+		' dateString: ',
+		dateString
 	)
+	const url = `https://edtmobiliteng.wigorservices.net/WebPsDyn.aspx?action=posETUD&serverid=C&Tel=${request.params.user}&date=${dateString}`
+	console.log('url', url)
+	const response = await fetch(url)
 	const body = await response.text()
+	console.log('body', body)
 
 	const htmlJson = parse(body)
-	const days = getDays(htmlJson[3].children[2].children[7].children)
-	const formatedJSON = formatJSON(
-		htmlJson[3].children[2].children[7].children,
-		days
-	)
+	// const days = getDays(htmlJson[3].children[2].children[7].children)
+	// const formatedJSON = formatJSON(
+	// 	htmlJson[3].children[2].children[7].children,
+	// 	days
+	// )
 
-	return lessonsToDays(formatedJSON)
+	// return lessonsToDays(formatedJSON)
+	const lessonsHtml = parseDay(htmlJson[1].children[3].children[6].children)
+	const lessons = formatLessons(lessonsHtml)
+	return lessons
 })
 
 server.listen(8080, (err, address) => {
@@ -35,6 +50,24 @@ server.listen(8080, (err, address) => {
 	}
 	console.log(`Server listening at ${address}`)
 })
+
+const parseDay = (dayHtml) => {
+	return dayHtml.filter((element) => {
+		return element?.attributes?.some((attr) => attr.value === 'Ligne')
+	})
+}
+
+const formatLessons = (lessonsHtml) => {
+	return lessonsHtml.map((lesson) => {
+		return {
+			startHour: lesson.children[0].children[0].content,
+			endHour: lesson.children[1].children[0].content,
+			name: lesson.children[2].children[0].content,
+			room: lesson.children[3].children[0].content,
+			teacher: lesson.children[4].children[0].content
+		}
+	})
+}
 
 const getDays = (HTMLJSON, days) => {
 	const Htmldays = HTMLJSON.filter((canBeDay) => {
