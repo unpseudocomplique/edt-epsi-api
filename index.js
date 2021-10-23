@@ -16,7 +16,7 @@ server.get('/edt/:user/:date', async (request, reply) => {
 	const date = request.params.date.split('-')
 	let dateString = ''
 	date.forEach((number, index) => {
-		dateString += `${number}${index !== date.length - 1 ? '%2F' : ''}`
+		dateString += `${number}${index !== date.length - 1 ? '/' : '%208:00'}`
 	})
 	console.log(
 		'request.params.user: ',
@@ -24,7 +24,7 @@ server.get('/edt/:user/:date', async (request, reply) => {
 		' dateString: ',
 		dateString
 	)
-	const url = `https://edtmobiliteng.wigorservices.net/WebPsDyn.aspx?action=posETUD&serverid=C&Tel=${request.params.user}&date=${dateString}`
+	const url = `https://edtmobiliteng.wigorservices.net/WebPsDyn.aspx?Action=posETUD&serverid=C&Tel=${request.params.user}&date=${dateString}`
 	console.log('url', url)
 	const response = await fetch(url)
 	const body = await response.text()
@@ -39,6 +39,7 @@ server.get('/edt/:user/:date', async (request, reply) => {
 
 	// return lessonsToDays(formatedJSON)
 	const lessonsHtml = parseDay(htmlJson[1].children[3].children[6].children)
+	console.log('lessonsHtml', lessonsHtml)
 	const lessons = formatLessons(lessonsHtml)
 	return lessons
 })
@@ -52,6 +53,7 @@ server.listen(8080, (err, address) => {
 })
 
 const parseDay = (dayHtml) => {
+	console.log('dayHtml', dayHtml)
 	return dayHtml.filter((element) => {
 		return element?.attributes?.some((attr) => attr.value === 'Ligne')
 	})
